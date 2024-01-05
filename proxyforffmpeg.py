@@ -9,10 +9,9 @@ class Savemp4:
 		pass
 
 	def writefile(self, filename, content):
-		filename = "real disk operation is BLOCKED!"
 		logging.info( "Filew: {}".format( filename ) )
-#		with open( filename, "wb" ) as f:
-#			f.write( content )
+		with open( filename, "wb" ) as f:
+			f.write( content )
 
 
 	def response(self, flow):
