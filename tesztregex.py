@@ -1,5 +1,6 @@
 import re
 import json
+import os
 from pprint import pprint
 
 print("-A-")###########################################################
@@ -51,3 +52,11 @@ loadedjson = json.loads(content)
 #pprint(loadedjson)
 
 pprint(loadedjson['clip_id'])
+
+print("-F-")###########################################################
+print(os.getcwd())
+print(os.path.expanduser("~/temp"))
+os.chdir(os.path.expanduser("~/temp"))
+print(os.getcwd())
+
+print("-G-")###########################################################

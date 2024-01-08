@@ -8,7 +8,7 @@ class Savemp4:
 	counter = 0;
 
 	def __init__(self):
-		pass
+		os.chdir(os.path.expanduser("~/temp"))
 
 	def store_to_filename_from_url(self, content, url, cutparameters = False):
 		if self.clip_id:

@@ -5,6 +5,9 @@ import json
 from pprint import pprint
 import os
 import base64
+import subprocess
+
+parts = list()
 
 def findfile(filename):
 	if os.path.isfile(filename):
@@ -26,12 +29,17 @@ def list_segments(jd, branch):
 			if os.path.isfile(fn):
 				print("Found: {}".format(fn))
 				found_count += 1
-		if found_count == seg_count:
-			print("JOIN THIS")
-			
-			newfn = item["id"] + ".mp4"
 
-			print(newfn)
+		if found_count == seg_count:
+			#a megtalált szegmensek száma megegyezik a jsonban lévők számával
+			print("Combining these segments")
+			
+			newfn = branch + item["id"] + ".mp4"
+
+			global parts
+			parts.append(newfn)
+
+			print("New file: " + newfn)
 			with open(newfn, "wb") as f_to:	#!!!!!!!!!!
 				init_b64 = item["init_segment"]
 				init_seg = base64.b64decode(init_b64)
@@ -45,6 +53,7 @@ def list_segments(jd, branch):
 						with open(fn, "rb") as f_from: #!!!!!!!!!!!
 							seg_data = f_from.read();
 							f_to.write(seg_data)
+			
 
 f = open("master.json")
 json_data = json.load(f);
@@ -58,3 +67,10 @@ print("video****************************")
 list_segments(json_data, "video")
 print("audio****************************")
 list_segments(json_data, "audio")
+
+if len(parts) == 2:
+#	command = "ffmpeg" -i" + parts[0] + " -i " + parts[1] + " out.mkv"
+	print("Calling ffmpeg: ")
+	subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "out.mkv"])
+	subprocess.run(["rm", "*.mp4")
+
