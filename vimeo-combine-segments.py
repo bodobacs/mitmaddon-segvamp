@@ -1,4 +1,5 @@
-#combine_stream.py
+#!/usr/bin/env python
+#vimeo-combine-segments.py
 
 import re
 import json
@@ -7,6 +8,7 @@ import os
 import base64
 import subprocess
 
+#segments collected in json make a full part
 parts = list()
 
 def findfile(filename):
@@ -32,7 +34,7 @@ def list_segments(jd, branch):
 
 		if found_count == seg_count:
 			#a megtalált szegmensek száma megegyezik a jsonban lévők számával
-			print("Combining these segments")
+			print("Combining these segments ...")
 			
 			newfn = branch + item["id"] + ".mp4"
 
@@ -60,17 +62,18 @@ json_data = json.load(f);
 f.close();
 
 base_url = json_data["base_url"]
-if not len(base_url):
-	exit
+if len(base_url):
+	print("****************************video****************************")
+	list_segments(json_data, "video")
+	print("****************************audio****************************")
+	list_segments(json_data, "audio")
 
-print("video****************************")
-list_segments(json_data, "video")
-print("audio****************************")
-list_segments(json_data, "audio")
-
-if len(parts) == 2:
-#	command = "ffmpeg" -i" + parts[0] + " -i " + parts[1] + " out.mkv"
-	print("Calling ffmpeg: ")
-	subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "out.mkv"])
-	subprocess.run(["rm", "*.mp4")
-
+	if len(parts) == 2:
+	#	command = "ffmpeg" -i" + parts[0] + " -i " + parts[1] + " out.mkv"
+		print("Calling ffmpeg: ")
+		subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
+		subprocess.run(["rm", "*.mp4"])
+	else
+		print("Error: No audio or video part or too many parts")
+else
+	print("Error: base_url not found")

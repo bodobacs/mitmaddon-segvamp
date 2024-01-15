@@ -1,3 +1,4 @@
+#vimeo-capture-mitmproxyaddon.py
 #clone master.json, mp4, m4s files with directory structure from vimeo stream to concatenate with ffmpeg later
 import logging
 import json
@@ -8,7 +9,8 @@ class Savemp4:
 	counter = 0;
 
 	def __init__(self):
-		os.chdir(os.path.expanduser("~/temp"))
+#		os.chdir(os.path.expanduser("~/temp"))
+		pass
 
 	def store_to_filename_from_url(self, content, url, cutparameters = False):
 		if self.clip_id:
