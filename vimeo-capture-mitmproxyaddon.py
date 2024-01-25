@@ -4,7 +4,7 @@ import logging
 import json
 import os
 
-class Savemp4:
+class ripvimeo:
 	clip_id = None;
 	counter = 0;
 
@@ -31,17 +31,17 @@ class Savemp4:
 		dirname = os.path.dirname(filename)
 
 		if len(dirname) > 0:
-			logging.info("Creating directory: {}".format(dirname))
+#			logging.info("Creating directory: {}".format(dirname))
 			os.makedirs(dirname, exist_ok=True)	#!!!!!!!!
 
-		logging.info("File: {}".format(filename))
 		if os.path.isfile(filename):
-			logging.info(" exists, skipping")
+			res = "skipping"
 		else:
 			self.counter += 1;
-			logging.info(" storing")# number: {}").format(self.counter)
+			res = "storing"
 			with open(filename, "wb") as f:	#!!!!!!!!!!
 				f.write(content)
+		logging.info("{}: {}".format(res, filename))
 
 	def response(self, flow):
 
@@ -66,4 +66,4 @@ class Savemp4:
 		#local script to join files
 
 
-addons = [Savemp4()]
+addons = [ripvimeo()]

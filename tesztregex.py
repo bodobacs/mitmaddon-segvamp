@@ -60,3 +60,8 @@ os.chdir(os.path.expanduser("~/temp"))
 print(os.getcwd())
 
 print("-G-")###########################################################
+
+#os.system('play -nq -t alsa synth {} sine {}'.format(1, 440))
+os.system('aplay /usr/share/sounds/purple/alert.wav')
+print('\007')
+print("\a")
