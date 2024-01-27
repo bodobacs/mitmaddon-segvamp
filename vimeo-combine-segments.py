@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 #vimeo-combine-segments.py
 
-import re
+#import re
 import json
-from pprint import pprint
+#from pprint import pprint
 import os
+import sys
 import base64
 import subprocess
 
@@ -74,9 +75,14 @@ def list_segments(jd, branch, printme):
 		else:
 			print(str("{}/{} segs found. √[{}. - {}.]").format(found_count, seg_count, first_missing, last_missing))
 
+print("Working dir: " + os.getcwd())
+
+
 f = open("master.json")
 json_data = json.load(f);
 f.close();
+
+print("Title: " + json_data["title"])
 
 base_url = json_data["base_url"]
 if len(base_url):
@@ -88,13 +94,20 @@ if len(base_url):
 	print("\n****************************result***************************")
 	if len(parts) == 2:
 		#command = "ffmpeg" -i" + parts[0] + " -i " + parts[1] + " out.mkv"
-		print("Calling ffmpeg: \n")
-		subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
-		subprocess.run(["rm", "*.mp4"])
-	else:
-		if len(parts) == 0:
-			print("No tracks were made")
-		elif len(parts) > 2:
-			print("Too many complete video or audio tracks, cannot decide what to include: ", parts)
+
+#		outfilename = sys.argv[1] + ".mkv" if 2 == len(sys.argv) else "out.mkv"
+		outfilename = os.path.expanduser('~') + "/temp/" + json_data['title'] + '.mkv'
+
+		print("Calling ffmpeg, creating: " + outfilename + "\n")
+		result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
+#		subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
+		print("HIBA!") if result.returncode else print("SIKER!")
+		sys.exit(result.returncode)
+	elif len(parts) < 2:
+		print("Missing tracks")
+	elif len(parts) > 2:
+		print("Too many complete video or audio tracks, cannot decide what to include: ", parts)
 else:
 	print("Error: base_url not found")
+
+sys.exit(1)
