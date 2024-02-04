@@ -11,41 +11,55 @@ class ripvimeo:
 	counter = 0
 	title = "dummyname" #extracted from response example: https://player.vimeo.com/video/797295134?h=ded2a4333
 	masterdir = str() #dir of master.json
-	workdir = os.path.expanduser('~') + "/temp/"
+	#workdir = os.path.expanduser('~') + "/temp/"
+	workdir = "/tmp/"
+	outputdir = os.path.expanduser('~') + "/temp/"
 
 	def __init__(self):
 #		os.chdir(os.path.expanduser("~/temp"))
 		pass
 
 	def get_title_and_modify_player_settings(self, response):
-		logging.info("Player settings response: ")
-		response.content = response.content.replace(b',"quality":null,', b',"quality":"240p",').replace(b'"autoplay":0,', b'"autoplay":1,')
-#		logging.info(response.content)
-		str_content = response.content.decode("utf-8")
+		#logging.info("Player starts or stops: ")
 
 		try:
-			first_part = str_content.split("<script>window.playerConfig = ")
-			if 1 < len(first_part):
-				os.chdir(self.workdir)
-
-				json_raw = first_part[1].split("</script>")[0]
-				json_data = json.loads(json_raw)
-				self.title = json_data['video']['title']
-				logging.info("Title: " + self.title)
-				logging.info("quality: {}".format(json_data['embed']['quality']))
-			elif "Vége" in first_part[0]:
+			str_content = response.content.decode("utf-8")
+			if 'Vége' in str_content: #player is stopping
 				#end of streaming, time to concatenate pieces
-				logging.info("No player settings")
-				logging.info(first_part)
+				logging.info("Play ends")
 
 				os.chdir(self.masterdir)
 				result = subprocess.run(["vimeo-combine-segments.py"]) #concatenate with external script
 				if result.returncode:
 					print("FAIL: vimeo-combine-segments.py")
 				else:
-					print("GOOD: cleanup")
+					print("Video done, cleaning up")
 					os.chdir(self.workdir)
 					subprocess.run(["rm", "-rf", "./" + self.clip_id + "/"])
+
+			else: #player is starting and getting settings
+				logging.info("Play starts")
+				os.chdir(self.workdir)
+				response.content = response.content.replace(b',"quality":null,', b',"quality":"240p",').replace(b'"autoplay":0,', b'"autoplay":1,')
+
+				#extract title
+				#self.title = str_content.split("<title>")[1].split(" on Vimeo</title>")[0]
+				split_title = str_content.split("<title>")
+				if split_title:
+					self.title = split_title[1].split(" on Vimeo</title>")[0]
+					logging.info("Title: " + self.title )
+				else:
+					logging.info("Not the usual player content")
+
+#				#extract json for title
+#				first_part = str_content.split("<script>window.playerConfig = ")
+#				if 1 < len(first_part): #player is sarting
+#
+#					json_raw = first_part[1].split("</script>")[0]
+#					json_data = json.loads(json_raw)
+#					self.title = json_data['video']['title']
+#					logging.info("Title: " + self.title)
+#					logging.info("quality: {}".format(json_data['embed']['quality']))
 
 		except ValueError as e:
 			logging.info("Failed to read player settings")
@@ -100,7 +114,9 @@ class ripvimeo:
 			self.masterdir = os.path.dirname(fullfilename)
 			logging.info("masterdir: " + self.masterdir) #save location of master.json
 
+			#saving vimeo-combine-segments.py parameters
 			injson['masterdir'] = self.masterdir
+			injson['outdir'] = self.outputdir
 			injson['title'] = self.title
 
 			dirname = os.path.dirname(fullfilename)

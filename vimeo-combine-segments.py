@@ -75,6 +75,7 @@ def list_segments(jd, branch, printme):
 		else:
 			print(str("{}/{} segs found. √[{}. - {}.]").format(found_count, seg_count, first_missing, last_missing))
 
+print("\nScript vimeo-combine-segments.py")
 print("Working dir: " + os.getcwd())
 
 
@@ -101,7 +102,7 @@ if len(base_url):
 		print("Calling ffmpeg, creating: " + outfilename + "\n")
 		result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
 #		subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
-		print("HIBA!") if result.returncode else print("SIKER!")
+		print("ffmpeg fail") if result.returncode else print("ffmpeg done")
 		sys.exit(result.returncode)
 	elif len(parts) < 2:
 		print("Missing tracks")
