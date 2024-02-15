@@ -97,7 +97,8 @@ if len(base_url):
 		#command = "ffmpeg" -i" + parts[0] + " -i " + parts[1] + " out.mkv"
 
 #		outfilename = sys.argv[1] + ".mkv" if 2 == len(sys.argv) else "out.mkv"
-		outfilename = os.path.expanduser('~') + "/temp/" + json_data['title'] + '.mkv'
+#		outfilename = os.path.expanduser('~') + "/temp/" + json_data['title'] + '.mkv'
+		outfilename = json_data['outdir'] + json_data['title'] + '.mkv'
 
 		print("Calling ffmpeg, creating: " + outfilename + "\n")
 		result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])

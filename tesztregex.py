@@ -1,6 +1,7 @@
 import re
 import json
 import os
+import logging
 from pprint import pprint
 
 print("-A-")###########################################################
@@ -62,6 +63,15 @@ print(os.getcwd())
 print("-G-")###########################################################
 
 #os.system('play -nq -t alsa synth {} sine {}'.format(1, 440))
-os.system('aplay /usr/share/sounds/purple/alert.wav')
+#os.system('aplay /usr/share/sounds/purple/alert.wav')
 print('\007')
 print("\a")
+
+print("-F-")###########################################################
+
+szoveg = "<title>bla bla1 bla2 bla3 bla4</title>"
+split = szoveg.split("bla1")
+print("split: ", split)
+
+
+
