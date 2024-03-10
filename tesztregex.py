@@ -1,8 +1,11 @@
+#!/usr/bin/python
+
 import re
 import json
 import os
 import logging
 from pprint import pprint
+import subprocess
 
 print("-A-")###########################################################
 
@@ -49,6 +52,7 @@ with open( filename, "r" ) as f:
 	content = f.read()
 
 loadedjson = json.loads(content)
+print(type(loadedjson))
 
 #pprint(loadedjson)
 
@@ -73,5 +77,6 @@ szoveg = "<title>bla bla1 bla2 bla3 bla4</title>"
 split = szoveg.split("bla1")
 print("split: ", split)
 
+print("-G-")###########################################################
 
-
+subprocess.call(["runme.py"])

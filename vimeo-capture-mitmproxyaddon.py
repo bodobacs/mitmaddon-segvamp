@@ -10,13 +10,14 @@ class ripvimeo:
 	clip_id = None
 	counter = 0
 	title = "dummyname" #extracted from response example: https://player.vimeo.com/video/797295134?h=ded2a4333
-	masterdir = str() #dir of master.json
+	masterdir = '' #dir of master.json
 	#workdir = os.path.expanduser('~') + "/temp/"
-	workdir = "/tmp/"
+	workdir = "/tmp/" #place where all capture goes
 	outputdir = os.path.expanduser('~') + "/temp/"
 
 	def __init__(self):
 #		os.chdir(os.path.expanduser("~/temp"))
+		os.chdir(self.workdir) #go to the baseof operation
 		pass
 
 	def get_title_and_modify_player_settings(self, response):
@@ -30,14 +31,17 @@ class ripvimeo:
 
 				if self.skippingthewholevideo: return
 
+				#pop into the master.json's dir
 				os.chdir(self.masterdir)
-				result = subprocess.run(["vimeo-combine-segments.py"]) #concatenate with external script
-				if result.returncode:
-					print("FAIL: vimeo-combine-segments.py")
-				else:
-					print("Video done, cleaning up")
-					os.chdir(self.workdir)
-					subprocess.run(["rm", "-rf", "./" + self.clip_id + "/"])
+				subprocess.call(["vimeo-combine-segments.py"])
+#				result = subprocess.run(["vimeo-combine-segments.py"]) #concatenate with external script
+				os.chdir(self.workdir)
+
+#				if result.returncode:
+#					print("FAIL: vimeo-combine-segments.py")
+#				else:
+#					print("Video done, no cleaning up")
+#					subprocess.run(["rm", "-rf", "./" + self.clip_id + "/"])
 
 			else: #player is starting and getting settings
 
@@ -51,7 +55,6 @@ class ripvimeo:
 						logging.info("Title found, play starts")
 
 						#reset settings
-						os.chdir(self.workdir)
 						response.content = response.content.replace(b',"quality":null,', b',"quality":"240p",').replace(b'"autoplay":0,', b'"autoplay":1,')
 
 					else:
@@ -139,7 +142,6 @@ class ripvimeo:
 			logging.info("masterdir: " + self.masterdir) #save location of master.json
 
 			#saving vimeo-combine-segments.py parameters
-			injson['masterdir'] = self.masterdir
 			injson['outdir'] = self.outputdir
 			injson['title'] = self.title
 
@@ -163,7 +165,6 @@ class ripvimeo:
 #			logging.info("STARTING SCRIPT")
 #			logging.info("masterdir: " + self.masterdir)
 #			tempdir = os.getcwd()
-#			os.chdir(self.masterdir)
 #			subprocess.run(["vimeo-combine-segments.py"]) #concatenate with external script
 #			os.chdir(tempdir)
 
