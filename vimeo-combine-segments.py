@@ -124,7 +124,7 @@ def find_and_join():
 			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
 	#			subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
 			print("ffmpeg fail") if result.returncode else print("ffmpeg done")
-			return result.returncode
+			return True
 		elif len(parts) < 2:
 			print("Missing tracks")
 		elif len(parts) > 2:
@@ -137,9 +137,9 @@ def find_and_join():
 print("\nScript vimeo-combine-segments.py")
 #print("Working dir: " + os.getcwd())
 
-if startcheck() and not find_and_join():
-	print("vimeo-combine-segments.py OK")
+if startcheck() and find_and_join():
+    print("vimeo-combine-segments.py: success")
 	sys.exit(0)
 
-print("Exiting with error")
+print("vimeo-combine-segments: error")
 sys.exit(1)
