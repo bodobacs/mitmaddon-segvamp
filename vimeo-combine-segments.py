@@ -138,7 +138,7 @@ print("\nScript vimeo-combine-segments.py")
 #print("Working dir: " + os.getcwd())
 
 if startcheck() and find_and_join():
-    print("vimeo-combine-segments.py: success")
+	print("vimeo-combine-segments.py: success")
 	sys.exit(0)
 
 print("vimeo-combine-segments: error")
