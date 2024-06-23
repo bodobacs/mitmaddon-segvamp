@@ -11,6 +11,7 @@ class ripvimeo:
 	counter = 0
 	title = "dummyname" #extracted from response example: https://player.vimeo.com/video/797295134?h=ded2a4333
 	masterdir = '' #dir of master.json
+	masterjson_filename = '' #now it can be master.json or playlist.json
 	#workdir = os.path.expanduser('~') + "/temp/"
 	workdir = "/tmp/" #place where all capture goes
 	outputdir = os.path.expanduser('~') + "/temp/"
@@ -33,7 +34,7 @@ class ripvimeo:
 
 				#pop into the master.json's dir
 				os.chdir(self.masterdir) #hibát ad amikor nem megy mentés mert már megvan a kimeneti fájl
-				subprocess.call(["vimeo-combine-segments.py"])
+				subprocess.call(["vimeo-combine-segments.py", self.masterjson_filename])
 #				result = subprocess.run(["vimeo-combine-segments.py"]) #concatenate with external script
 				os.chdir(self.workdir)
 
@@ -115,7 +116,8 @@ class ripvimeo:
 			res = "storing"
 			with open(filename, "wb") as f:	#!!!!!!!!!!
 				f.write(content)
-		logging.info("{}: {}".format(res, filename))
+			logging.info("{}: {}".format(res, filename)) #no skipping message
+#		logging.info("{}: {}".format(res, filename))
 
 	skippingthewholevideo = False
 	def response(self, flow):
@@ -124,35 +126,37 @@ class ripvimeo:
 			self.get_title_and_modify_player_settings(flow.response)
 			#logging.info("player control request: " + flow.request.url)
 
-
 		if self.skippingthewholevideo: return
 
 		#filter responses by clip_id
-		if "master.json" in flow.request.url:
-			logging.info("Found master.json")
-			try:
-				#read in, create the same local folder structure
-				injson = json.loads(flow.response.content)
-				
-				#store clip_id
-				self.clip_id = injson['clip_id']
-				logging.info("Found clip_id: " + self.clip_id)
-				
-				fullfilename = self.make_filename_from_url(flow.request.url, True)
-				logging.info("filename: " + fullfilename)
-				self.masterdir = os.path.dirname(fullfilename)
-				logging.info("masterdir: " + self.masterdir) #save location of master.json
+		if "master.json" in flow.request.url or "playlist.json" in flow.request.url:
+			if "master.json" in flow.request.url: self.masterjson_filename = "master.json"
+			if "playlist.json" in flow.request.url: self.masterjson_filename = "playlist.json"
+			if len(self.masterjson_filename):
+				logging.info("Found: " + self.masterjson_filename)
+				try:
+					#read in, create the same local folder structure
+					injson = json.loads(flow.response.content)
 
-				#saving vimeo-combine-segments.py parameters
-				injson['outdir'] = self.outputdir
-				injson['title'] = self.title
+					#store clip_id
+					self.clip_id = injson['clip_id']
+					logging.info("Found clip_id: " + self.clip_id)
 
-				dirname = os.path.dirname(fullfilename)
-				os.makedirs(dirname, exist_ok=True)
-				with open(fullfilename, 'w', encoding='utf-8') as f:
-					json.dump(injson, f, ensure_ascii=False, indent=4)
-			except decoder.JSONDecodeError as e:
-				print(e)
+					fullfilename = self.make_filename_from_url(flow.request.url, True)
+					logging.info("filename: " + fullfilename)
+					self.masterdir = os.path.dirname(fullfilename)
+					logging.info("masterdir: " + self.masterdir) #save location of master.json
+
+					#saving vimeo-combine-segments.py parameters
+					injson['outdir'] = self.outputdir
+					injson['title'] = self.title
+
+					dirname = os.path.dirname(fullfilename)
+					os.makedirs(dirname, exist_ok=True)
+					with open(fullfilename, 'w', encoding='utf-8') as f:
+						json.dump(injson, f, ensure_ascii=False, indent=4)
+				except json.decoder.JSONDecodeError as e:
+					print(e)
 
 		#save files in the right place
 		elif self.clip_id != None and self.clip_id in flow.request.url:

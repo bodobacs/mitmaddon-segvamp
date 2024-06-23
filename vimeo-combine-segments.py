@@ -80,18 +80,18 @@ def list_segments(jd, branch, printme):
 
 def startcheck():
 	try:
-		f = open("master.json")
+		if(len(sys.argv)): f = open(sys.argv[1])
 
 		try:
 			global json_data
 			json_data = json.load(f);
 		except:
-			print("Cannot load master.json")
+			print("Cannot load ")
 			return False
 		finally:
 			f.close();
 	except:
-		print("Cannot open master.json")
+		print("Cannot open master.json" + sys.argv[1])
 		return False
 
 	if 'title' in json_data and 'outdir' in json_data and 'base_url' in json_data:
