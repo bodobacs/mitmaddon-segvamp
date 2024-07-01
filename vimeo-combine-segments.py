@@ -12,35 +12,42 @@ import subprocess
 json_data = dict()
 base_url = str()
 #segments collected in json make a full part
-parts = list()
+track_mediafiles = list()
+
+complete_track_ids = list()
+
 
 def findfile(filename):
 	if os.path.isfile(filename):
 		print("Found: {}".format(filename))
 #	print("Not found: {}".format(filename))
 
-def print_video_info(item):
-	print("\n{}: {}x{}".format(item["base_url"], item["width"], item["height"]))
+def print_video_info(track):
+	print("\ntrack id: {}\n {}: {}x{}".format(track['id'], track["base_url"], track["width"], track["height"]))
 
-def print_audio_info(item):
-	print("\n{}: {}".format(item["base_url"], item["format"]))
+def print_audio_info(track):
+	print("\ntrack id: {}\n {}: {}".format(track['id'], track["base_url"], track["format"]))
 
-def list_segments(jd, branch, printme):
-	# Iterate through the JSON array
-	for item in jd[branch]:
-		pack_base_url = item["base_url"]
-#		print(pack_base_url)
-		printme(item)
-		seg_count = len(item["segments"])
-#		print("Number of segments: ", seg_count)
+def find_complete_streams(jd, branch, printme):
+	# Iterate through all the tracks under the branch
+	for track in jd[branch]:
+		base_url_of_track = track["base_url"]
+#		print(base_url_of_track)
+		printme(track) #printme is a separate print function to audio and video
+
+		segments_count = len(track["segments"]) #number of the segments in one stream
+#		print("Number of segments: ", segments_count)
+
+		#check how many files we have of those segments
 		found_count = 0
 		n = 0
 
+		#registering the missing segments so I can have some clue where are the missing track_mediafiles
 		first_missing = -1
 		last_missing = 0
 
-		#check all segments in track
-		for seg in item["segments"]:
+		#check all segments in the track
+		for seg in track["segments"]:
 			seg_url = seg["url"]
 
 			#"range" from http-request header given to the end of the small files name
@@ -48,8 +55,9 @@ def list_segments(jd, branch, printme):
 			if "range" in seg: seg_range = "bytes=" + seg["range"]
 
 			#create filename from data
-			fn = base_url + pack_base_url + seg_url + seg_range
+			fn = base_url + base_url_of_track + seg_url + seg_range
 
+			#check if the file exists and count them
 			if os.path.isfile(fn):
 				#print("Found: {}".format(fn))
 				found_count += 1
@@ -59,42 +67,57 @@ def list_segments(jd, branch, printme):
 				first_missing = n
 			n += 1
 
-		if found_count == seg_count:
-			#a megtalált szegmensek száma megegyezik a jsonban lévők számával
-			newfn = branch + item["id"] + ".mp4"
-			print(str("Found all {}/{} segs. Creating: {}").format(found_count, seg_count, newfn))
+		if found_count == segments_count:
+			#all files exist for creating the track
+			print(str("Found all {}/{} segments").format(found_count, segments_count))
 
-			global parts
-			parts.append(newfn)
+			#saving the 
+			global complete_track_ids
+			complete_track_ids.append(track['id'])
+		else: print(str("{}/{} segs found. √[{}. - {}.]").format(found_count, segments_count, first_missing, last_missing))
 
-#			print("New file: " + newfn)
-			with open(newfn, "wb") as f_to:	#!!!!!!!!!!
-				#write init seqment to file
-				init_b64 = item["init_segment"]
-				init_seg = base64.b64decode(init_b64)
+def create_track_media(jd):
+	for branch in ["video", "audio"]:
+		for track in jd[branch]:
+			if track['id'] in complete_track_ids:
+				newfn = branch + track["id"] + ".mp4"
+				print(str("\ntrack id: {}, Creating: {}").format(track['id'], newfn))
 
-				f_to.write(init_seg)
+				with open(newfn, "wb") as f_to:	#!!!!!!!!!!
+					#write init seqment to file
+					init_b64 = track["init_segment"]
+					init_seg = base64.b64decode(init_b64)
 
-				for segread in item["segments"]:
-					seg_url = segread["url"]
-					#"range" from http-request header given to the end of the small files name
-					seg_range = ''
-					if "range" in segread: seg_range = "bytes=" + segread["range"]
+					f_to.write(init_seg)
 
-					#create filename from data
-					fn = base_url + pack_base_url + seg_url + seg_range
+					write_counter = 0
+					for segread in track["segments"]:
+						seg_url = segread["url"]
+						#"range" from http-request header given to the end of the small files name
+						seg_range = ''
+						if "range" in segread: seg_range = "bytes=" + segread["range"]
 
-					if os.path.isfile(fn):
-						with open(fn, "rb") as f_from: #!!!!!!!!!!!
-							seg_data = f_from.read();
-							f_to.write(seg_data)
-		else:
-			print(str("{}/{} segs found. √[{}. - {}.]").format(found_count, seg_count, first_missing, last_missing))
+						#create filename from data
+						fn = base_url + track['base_url'] + seg_url + seg_range
 
+						if os.path.isfile(fn):
+							with open(fn, "rb") as f_from:
+								seg_data = f_from.read();
+								f_to.write(seg_data)
+								write_counter+=1
+
+#					print("write counter: ", write_counter)
+					if write_counter == len(track['segments']):
+						global track_mediafiles
+						track_mediafiles.append(newfn)
+						print("All segments are written to file")
 
 def startcheck():
 	try:
-		if(len(sys.argv)): f = open(sys.argv[1])
+		if(len(sys.argv) > 1): f = open(sys.argv[1])
+		else:
+			print("No input json file")
+			return False
 
 		try:
 			global json_data
@@ -121,14 +144,18 @@ def find_and_join():
 	global base_url
 	base_url = json_data["base_url"]
 	if len(base_url):
+
 		print("\n****************************video****************************")
-		list_segments(json_data, "video", print_video_info)
+		find_complete_streams(json_data, "video", print_video_info)
+
 		print("\n****************************audio****************************")
-		list_segments(json_data, "audio", print_audio_info)
+		find_complete_streams(json_data, "audio", print_audio_info)
 
 		print("\n****************************result***************************")
-		if len(parts) == 2:
-			#command = "ffmpeg" -i" + parts[0] + " -i " + parts[1] + " out.mkv"
+		create_track_media(json_data)
+
+		if len(track_mediafiles) == 2:
+			#command = "ffmpeg" -i" + track_mediafiles[0] + " -i " + track_mediafiles[1] + " out.mkv"
 
 	#			outfilename = sys.argv[1] + ".mkv" if 2 == len(sys.argv) else "out.mkv"
 	#			outfilename = os.path.expanduser('~') + "/temp/" + json_data['title'] + '.mkv'
@@ -136,16 +163,16 @@ def find_and_join():
 
 			print("Calling ffmpeg, creating: " + outfilename + "\n")
 #mkv version was working
-			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
+			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", outfilename])
 #mp4 version needs changes because mp4 does not accept simple concatenation
-#			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
-	#			subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
+#			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", outfilename])
+	#			subprocess.run(["ffmpeg", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", "out.mkv"])
 			print("ffmpeg fail") if result.returncode else print("ffmpeg done")
 			return True
-		elif len(parts) < 2:
+		elif len(track_mediafiles) < 2:
 			print("Missing tracks")
-		elif len(parts) > 2:
-			print("Too many complete video or audio tracks, cannot decide what to include: ", parts)
+		elif len(track_mediafiles) > 2:
+			print("Too many complete video or audio tracks, cannot decide what to include: ", track_mediafiles)
 	else:
 		print("Error: base_url not found")
 	return False
