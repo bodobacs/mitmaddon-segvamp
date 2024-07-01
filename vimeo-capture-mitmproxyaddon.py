@@ -60,11 +60,11 @@ class ripvimeo:
 						response.content = response.content.replace(b',"quality":null,', b',"quality":"540p",').replace(b'"autoplay":0,', b'"autoplay":1,')
 
 					else:
-						logging.info("Not found title endtag: ", split_at_endtag)
+						logging.info("Not found title endtag: " + split_at_endtag[0])
 						return
 
 					##checking outfile
-					outfilename = self.outputdir + self.title + '.mkv'
+					outfilename = self.outputdir + self.title + '.mp4'
 					if os.path.isfile(outfilename):
 						self.skippingthewholevideo = True
 						logging.info('Outfile "{}" already exsists, skipping the whole video'.format(outfilename))
@@ -90,14 +90,14 @@ class ripvimeo:
 			logging.info("Failed to read player settings")
 			#itt kene visszanyomni a valtoztatasokat
 
-	def make_filename_from_url(self, url, cutparameters = False):
+	def make_filename_from_url(self, url, cutparameters = False, extra = ''):
 		if self.clip_id:
 			splitbyclip_id = url.split(str("/" + self.clip_id + "/"))
 			if len(splitbyclip_id) == 2:
 				filenamepart2 = splitbyclip_id[1]
 				if cutparameters:
 					filenamepart2 = filenamepart2.split("?")[0]
-				return "./" + self.clip_id + "/" + filenamepart2
+				return "./" + self.clip_id + "/" + filenamepart2 + extra
 
 			else:
 				logging.info("URL NOT OK: " + url)
@@ -122,10 +122,13 @@ class ripvimeo:
 	skippingthewholevideo = False
 	def response(self, flow):
 
+		#catching and modifying settings transfer
 		if flow.request.url.startswith("https://player.vimeo.com/video/"):
+			#initialization settings arrived
 			self.get_title_and_modify_player_settings(flow.response)
 			#logging.info("player control request: " + flow.request.url)
 
+		#already saved content, output filename fom title exists in target dir
 		if self.skippingthewholevideo: return
 
 		#filter responses by clip_id
@@ -142,7 +145,7 @@ class ripvimeo:
 					self.clip_id = injson['clip_id']
 					logging.info("Found clip_id: " + self.clip_id)
 
-					fullfilename = self.make_filename_from_url(flow.request.url, True)
+					fullfilename = self.make_filename_from_url(flow.request.url, True, '')
 					logging.info("filename: " + fullfilename)
 					self.masterdir = os.path.dirname(fullfilename)
 					logging.info("masterdir: " + self.masterdir) #save location of master.json
@@ -160,7 +163,16 @@ class ripvimeo:
 
 		#save files in the right place
 		elif self.clip_id != None and self.clip_id in flow.request.url:
-			self.writefile(self.make_filename_from_url(flow.request.url, False), flow.response.content)
+			#save file to a server-like file structure
+
+			#they hid the range parameter in the http-request header so the filename will not change and cannot save it individually
+			if 'range' in flow.request.headers:
+				flow.request.headers['range']
+				#extending filename with the value of "range" from http-request header
+				self.writefile(self.make_filename_from_url(flow.request.url, False, flow.request.headers['range']), flow.response.content)
+			else: 
+				#the general
+				self.writefile(self.make_filename_from_url(flow.request.url, False, ''), flow.response.content)
 
 		#local script to join files
 

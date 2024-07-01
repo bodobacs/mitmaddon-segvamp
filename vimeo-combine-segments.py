@@ -42,9 +42,16 @@ def list_segments(jd, branch, printme):
 		#check all segments in track
 		for seg in item["segments"]:
 			seg_url = seg["url"]
-			fn = base_url + pack_base_url + seg_url
+
+			#"range" from http-request header given to the end of the small files name
+			seg_range = ''
+			if "range" in seg: seg_range = "bytes=" + seg["range"]
+
+			#create filename from data
+			fn = base_url + pack_base_url + seg_url + seg_range
+
 			if os.path.isfile(fn):
-#				print("Found: {}".format(fn))
+				#print("Found: {}".format(fn))
 				found_count += 1
 			elif first_missing != -1:
 				last_missing = n
@@ -62,14 +69,21 @@ def list_segments(jd, branch, printme):
 
 #			print("New file: " + newfn)
 			with open(newfn, "wb") as f_to:	#!!!!!!!!!!
+				#write init seqment to file
 				init_b64 = item["init_segment"]
 				init_seg = base64.b64decode(init_b64)
-				
+
 				f_to.write(init_seg)
 
 				for segread in item["segments"]:
 					seg_url = segread["url"]
-					fn = base_url + pack_base_url + seg_url
+					#"range" from http-request header given to the end of the small files name
+					seg_range = ''
+					if "range" in segread: seg_range = "bytes=" + segread["range"]
+
+					#create filename from data
+					fn = base_url + pack_base_url + seg_url + seg_range
+
 					if os.path.isfile(fn):
 						with open(fn, "rb") as f_from: #!!!!!!!!!!!
 							seg_data = f_from.read();
@@ -121,7 +135,10 @@ def find_and_join():
 			outfilename = json_data['outdir'] + json_data['title'] + '.mkv'
 
 			print("Calling ffmpeg, creating: " + outfilename + "\n")
+#mkv version was working
 			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
+#mp4 version needs changes because mp4 does not accept simple concatenation
+#			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", parts[0], "-i", parts[1], "-c", "copy", outfilename])
 	#			subprocess.run(["ffmpeg", "-i", parts[0], "-i", parts[1], "-c", "copy", "out.mkv"])
 			print("ffmpeg fail") if result.returncode else print("ffmpeg done")
 			return True
