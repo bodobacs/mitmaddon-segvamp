@@ -16,6 +16,7 @@ track_mediafiles = list()
 
 complete_track_ids = list()
 
+outfilename = str()
 
 def findfile(filename):
 	if os.path.isfile(filename):
@@ -159,9 +160,10 @@ def find_and_join():
 
 	#			outfilename = sys.argv[1] + ".mkv" if 2 == len(sys.argv) else "out.mkv"
 	#			outfilename = os.path.expanduser('~') + "/temp/" + json_data['title'] + '.mkv'
+			global outfilename
 			outfilename = json_data['outdir'] + json_data['title'] + '.mkv'
 
-			print("Calling ffmpeg, creating: " + outfilename + "\n")
+			print("Calling ffmpeg to create: " + outfilename + "\n")
 #mkv version was working
 			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", outfilename])
 #mp4 version needs changes because mp4 does not accept simple concatenation
@@ -182,8 +184,9 @@ print("\nScript vimeo-combine-segments.py")
 #print("Working dir: " + os.getcwd())
 
 if startcheck() and find_and_join():
-	print("vimeo-combine-segments.py: success")
+	outfilename
+	print("vimeo-combine-segments.py success, created: " + outfilename)
 	sys.exit(0)
 
-print("vimeo-combine-segments: error")
+print("vimeo-combine-segments error")
 sys.exit(1)

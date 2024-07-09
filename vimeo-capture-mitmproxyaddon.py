@@ -9,12 +9,13 @@ import subprocess
 class ripvimeo:
 	clip_id = None
 	counter = 0
-	title = "dummyname" #extracted from response example: https://player.vimeo.com/video/797295134?h=ded2a4333
+	title = "title-not-found" #extracted from response example: https://player.vimeo.com/video/797295134?h=ded2a4333
 	masterdir = '' #dir of master.json
 	masterjson_filename = '' #now it can be master.json or playlist.json
 	#workdir = os.path.expanduser('~') + "/temp/"
 	workdir = "/tmp/" #place where all capture goes
 	outputdir = os.path.expanduser('~') + "/temp/"
+	skippingthewholevideo = False
 
 	def __init__(self):
 #		os.chdir(os.path.expanduser("~/temp"))
@@ -26,9 +27,9 @@ class ripvimeo:
 
 		try:
 			str_content = response.content.decode("utf-8")
-			if 'Vége' in str_content: #player is stopping
+			if 'Vége a videónak' in str_content: #player is stopping
 				#end of streaming, time to concatenate pieces
-				logging.info('"Vége"')
+				logging.info('"Vége a videónak" found, combining segments:')
 
 				if self.skippingthewholevideo: return
 
@@ -45,6 +46,9 @@ class ripvimeo:
 #					subprocess.run(["rm", "-rf", "./" + self.clip_id + "/"])
 
 			else: #player is starting, overwrite settings
+				##1## Check if this response is a proper player settings file
+				##2## Check if there is a title
+				##3## Overwrite settings if possible
 
 				#extract title
 				#self.title = str_content.split("<title>")[1].split(" on Vimeo</title>")[0]
@@ -53,28 +57,26 @@ class ripvimeo:
 					split_at_endtag = split_title[1].split(" on Vimeo</title>", 1)
 					if 2 == len(split_at_endtag):
 						self.title = split_at_endtag[0]
-						logging.info("Title found, playing")
+
+						##checking outfile
+						outfilename = self.outputdir + self.title + '.mp4'
+						if os.path.isfile(outfilename):
+							self.skippingthewholevideo = True
+							logging.info('Outfile "{}" already exsists, skipping the whole video'.format(outfilename))
+						else:
+							logging.info("Title found, playing")
+							logging.info("Outfile: " + outfilename)
+							self.skippingthewholevideo = False
 
 						#reset settings, autoplay, choose resolution here
-#						response.content = response.content.replace(b',"quality":null,', b',"quality":"240p",').replace(b'"autoplay":0,', b'"autoplay":1,')
+						response.content = response.content.replace(b',"quality":null,', b',"quality":"240p",').replace(b'"autoplay":0,', b'"autoplay":1,')
 						response.content = response.content.replace(b',"quality":null,', b',"quality":"540p",').replace(b'"autoplay":0,', b'"autoplay":1,')
 
-					else:
-						logging.info("Not found title endtag: " + split_at_endtag[0])
+						#all good
 						return
 
-					##checking outfile
-					outfilename = self.outputdir + self.title + '.mp4'
-					if os.path.isfile(outfilename):
-						self.skippingthewholevideo = True
-						logging.info('Outfile "{}" already exsists, skipping the whole video'.format(outfilename))
-					else:
-						logging.info("Outfile: " + outfilename)
-						self.skippingthewholevideo = False
-
-				else:
-					logging.info("Not the usual player content")
-					return
+					logging.info('Not found " on Vimeo</title>"')
+				logging.info('Not found "<title>"')
 
 #				#extract json for title
 #				first_part = str_content.split("<script>window.playerConfig = ")
@@ -119,14 +121,12 @@ class ripvimeo:
 			logging.info("{}: {}".format(res, filename)) #no skipping message
 #		logging.info("{}: {}".format(res, filename))
 
-	skippingthewholevideo = False
 	def response(self, flow):
 
 		#catching and modifying settings transfer
 		if flow.request.url.startswith("https://player.vimeo.com/video/"):
 			#initialization settings arrived
 			self.get_title_and_modify_player_settings(flow.response)
-			#logging.info("player control request: " + flow.request.url)
 
 		#already saved content, output filename fom title exists in target dir
 		if self.skippingthewholevideo: return
