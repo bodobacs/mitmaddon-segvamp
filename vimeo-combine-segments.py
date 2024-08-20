@@ -1,5 +1,5 @@
-#git repo 2024.08.20
 #!/usr/bin/env python
+#git repo 2024.08.20
 #vimeo-combine-segments.py
 
 #import re
@@ -186,7 +186,7 @@ print("\nScript vimeo-combine-segments.py")
 #print("Working dir: " + os.getcwd())
 
 if startcheck() and find_and_join():
-	outfilename
+#	outfilename
 	print("vimeo-combine-segments.py success, created: " + outfilename)
 	sys.exit(0)
 
