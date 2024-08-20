@@ -1,0 +1,1 @@
+/home/gamer/bin/jsonview.sh
