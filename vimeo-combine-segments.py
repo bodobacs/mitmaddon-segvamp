@@ -165,7 +165,8 @@ def find_and_join():
 
 			print("Calling ffmpeg to create: " + outfilename + "\n")
 #mkv version was working
-			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", outfilename])
+			result = subprocess.run(["ffmpeg", "-n", "-hide_banner", "-loglevel", "warning", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", outfilename])
+			#'-n': no overwrite
 #mp4 version needs changes because mp4 does not accept simple concatenation
 #			result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "warning", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", outfilename])
 	#			subprocess.run(["ffmpeg", "-i", track_mediafiles[0], "-i", track_mediafiles[1], "-c", "copy", "out.mkv"])
