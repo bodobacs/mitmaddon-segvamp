@@ -1,6 +1,7 @@
-#git repo 2024.08.20
 #vimeo-capture-mitmproxyaddon.py
+#git repo 2024.08.20
 #clone master.json, mp4, m4s files with directory structure from vimeo stream to concatenate with ffmpeg later
+
 import logging
 import json
 import os
