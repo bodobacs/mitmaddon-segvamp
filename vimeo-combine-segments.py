@@ -118,14 +118,14 @@ def startcheck():
 	try:
 		if(len(sys.argv) > 1): f = open(sys.argv[1])
 		else:
-			print("No input json file")
+			print("No input json file given")
 			return False
 
 		try:
 			global json_data
 			json_data = json.load(f);
 		except:
-			print("Cannot load ")
+			print("Opened " + sys.argv[1] + "but cannot load json data")
 			return False
 		finally:
 			f.close();
