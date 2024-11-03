@@ -31,7 +31,7 @@ class ripvimeo:
 			str_content = response.content.decode("utf-8")
 			if 'Vége a videónak' in str_content: #player is stopping
 				#end of streaming, time to concatenate pieces
-				logging.info('"Vége a videónak" found, combining segments:')
+				logging.warning('"Vége a videónak" found, combining segments:')
 
 				if self.skippingthewholevideo: return
 
@@ -64,10 +64,10 @@ class ripvimeo:
 						outfilename = self.outputdir + self.title + '.mp4'
 						if os.path.isfile(outfilename):
 							self.skippingthewholevideo = True
-							logging.info('Outfile "{}" already exsists, skipping the whole video'.format(outfilename))
+							logging.warning('Outfile "{}" already exsists, skipping the whole video'.format(outfilename))
 						else:
-							logging.info("Title found, playing")
-							logging.info("Outfile: " + outfilename)
+							logging.warning("Title found, playing")
+							logging.warning("Outfile: " + outfilename)
 							self.skippingthewholevideo = False
 
 						#reset settings, autoplay, choose resolution here
@@ -77,8 +77,8 @@ class ripvimeo:
 						#all good
 						return
 
-					logging.info('Not found " on Vimeo</title>"')
-				logging.info('Not found "<title>"')
+					logging.error('Not found " on Vimeo</title>"')
+				logging.error('Not found "<title>"')
 
 #				#extract json for title
 #				first_part = str_content.split("<script>window.playerConfig = ")
@@ -91,7 +91,7 @@ class ripvimeo:
 #					logging.info("quality: {}".format(json_data['embed']['quality']))
 
 		except ValueError as e:
-			logging.info("Failed to read player settings")
+			logging.error("Failed to read player settings")
 			#itt kene visszanyomni a valtoztatasokat
 
 	def make_filename_from_url(self, url, cutparameters = False, extra = ''):
@@ -104,7 +104,7 @@ class ripvimeo:
 				return "./" + self.clip_id + "/" + filenamepart2 + extra
 
 			else:
-				logging.info("URL NOT OK: " + url)
+				logging.error("URL NOT OK: " + url)
 
 	def writefile(self, filename, content):
 		dirname = os.path.dirname(filename)
@@ -120,7 +120,7 @@ class ripvimeo:
 			res = "storing"
 			with open(filename, "wb") as f:	#!!!!!!!!!!
 				f.write(content)
-			logging.info("{}: {}".format(res, filename)) #no skipping message
+			logging.warning("{}: {}".format(res, filename)) #no skipping message
 #		logging.info("{}: {}".format(res, filename))
 
 	def response(self, flow):
@@ -138,19 +138,19 @@ class ripvimeo:
 			if "master.json" in flow.request.url: self.masterjson_filename = "master.json"
 			if "playlist.json" in flow.request.url: self.masterjson_filename = "playlist.json"
 			if len(self.masterjson_filename):
-				logging.info("Found: " + self.masterjson_filename)
+				logging.warning("Found: " + self.masterjson_filename)
 				try:
 					#read in, create the same local folder structure
 					injson = json.loads(flow.response.content)
 
 					#store clip_id
 					self.clip_id = injson['clip_id']
-					logging.info("Found clip_id: " + self.clip_id)
+					logging.debug("Found clip_id: " + self.clip_id)
 
 					fullfilename = self.make_filename_from_url(flow.request.url, True, '')
-					logging.info("filename: " + fullfilename)
+					logging.warning("filename: " + fullfilename)
 					self.masterdir = os.path.dirname(fullfilename)
-					logging.info("masterdir: " + self.masterdir) #save location of master.json
+					logging.warning("masterdir: " + self.masterdir) #save location of master.json
 
 					#saving vimeo-combine-segments.py parameters
 					injson['outdir'] = self.outputdir

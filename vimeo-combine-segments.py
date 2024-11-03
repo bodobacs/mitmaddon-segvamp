@@ -187,7 +187,7 @@ print("\nScript vimeo-combine-segments.py")
 
 if startcheck() and find_and_join():
 #	outfilename
-	print("vimeo-combine-segments.py success, created: " + outfilename)
+	print("vimeo-combine-segments.py SUCCESS, created: " + outfilename)
 	sys.exit(0)
 
 print("vimeo-combine-segments error")
